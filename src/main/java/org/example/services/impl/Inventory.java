@@ -14,11 +14,14 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class Inventory implements InventoryService {
 
-    private Map<String, Product> products = new ConcurrentHashMap<>();
-    private ObjectMapper mapper = new ObjectMapper();
+    private final Map<String, Product> products = new ConcurrentHashMap<>();
+    private  final Lock fileLock = new ReentrantLock();
+    private final ObjectMapper mapper = new ObjectMapper();
     @Override
     public Response<String> addProduct(Scanner scanner, Product product) {
         product.setProductId(generateProductId());
@@ -82,6 +85,7 @@ public class Inventory implements InventoryService {
     public void saveToFile()
     {
         try {
+            fileLock.lock();
             clearFile();
             FileWriter fileWriter = new FileWriter("products.txt", true);
             for(Product product: products.values()) {
@@ -91,6 +95,9 @@ public class Inventory implements InventoryService {
             fileWriter.close();
         }
         catch (Exception ignore) {}
+        finally {
+            fileLock.unlock();
+        }
     }
 
     @Override

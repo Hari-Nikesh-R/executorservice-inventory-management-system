@@ -31,7 +31,9 @@ public class InventoryManager {
         System.out.println("====================================");
         System.out.println("   Inventory Management System   ");
         System.out.println("====================================");
-        ExecutorService executorService = Executors.newFixedThreadPool(5);
+        int core = Runtime.getRuntime().availableProcessors();
+
+        ExecutorService executorService = Executors.newFixedThreadPool(core+10);
         while (true) {
             System.out.println();
             inventoryOptions();

@@ -7,7 +7,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Objects;
-import java.util.Scanner;
 import java.util.Vector;
 
 public class Purchase implements Runnable {
