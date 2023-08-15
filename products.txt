@@ -1,0 +1,2 @@
+{"productId":"P-ID-01","productName":"Handler","productPrice":120.0,"productQuantity":0}
+{"productId":"P-ID-02","productName":"Hello!23","productPrice":120.0,"productQuantity":6}

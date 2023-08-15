@@ -11,6 +11,7 @@ import java.util.Scanner;
 import java.util.Vector;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 
 public class InventoryManager {
 
@@ -41,24 +42,30 @@ public class InventoryManager {
                 System.out.println(prettyJson);
             }
             else if(choice == 2) {
-                Vector<Product> productVector = inventoryService.getAllProducts();
-                System.out.println("Select an product for purchase");
-                for(int index = 1;index<=productVector.size();index++){
-                    System.out.println(index+". "+productVector.elementAt(index-1));
-                }
-                System.out.println((productVector.size()+1)+". Exit");
-                while(true) {
-                    int purchaseChoice = scanner.nextInt();
-                    if(purchaseChoice > productVector.size()) {
-                        break;
+                try {
+                    Vector<Product> productVector = inventoryService.getAllProducts();
+                    System.out.println("Select an product for purchase");
+                    for (int index = 1; index <= productVector.size(); index++) {
+                        System.out.println(index + ". " + productVector.elementAt(index - 1));
                     }
-                    System.out.println("Enter the product quantity: ");
-                    Integer quantity = scanner.nextInt();
-                    executorService.execute(new Purchase(inventoryService, productVector.elementAt(purchaseChoice-1).getProductId(), quantity));
+                    System.out.println((productVector.size() + 1) + ". Exit");
+                    while (true) {
+                        int purchaseChoice = scanner.nextInt();
+                        if (purchaseChoice > productVector.size()) {
+                            break;
+                        }
+                        System.out.println("Enter the product quantity: ");
+                        Integer quantity = scanner.nextInt();
+                        executorService.execute(new Purchase(inventoryService, productVector.elementAt(purchaseChoice - 1).getProductId(), quantity));
+                    }
+                    executorService.shutdown();
+                    while (!executorService.isTerminated()) {
+                    }
+                    inventoryService.saveToFile();
                 }
-                executorService.shutdown();
-                while (!executorService.isTerminated()){}
-                inventoryService.saveToFile();
+                catch (RejectedExecutionException rejectedExecutionException) {
+                    System.out.println(rejectedExecutionException.getLocalizedMessage());
+                }
             }
             else if(choice == 3) {
                 String prettyJson = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(inventoryService.generateReport());

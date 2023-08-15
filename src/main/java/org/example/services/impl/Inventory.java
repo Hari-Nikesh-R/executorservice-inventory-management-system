@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.example.dtos.response.Report;
 import org.example.dtos.response.Response;
+import org.example.exception.InputExceptionHandler;
 import org.example.model.Product;
 import org.example.services.InventoryService;
 
@@ -21,12 +22,9 @@ public class Inventory implements InventoryService {
     @Override
     public Response<String> addProduct(Scanner scanner, Product product) {
         product.setProductId(generateProductId());
-        System.out.println("Enter product name: ");
-        product.setProductName(scanner.nextLine());
-        System.out.println("Enter product Price: ");
-        product.setProductPrice(scanner.nextDouble());
-        System.out.println("Enter product available quantity: ");
-        product.setProductQuantity(scanner.nextInt());
+        product.setProductName(new InputExceptionHandler<String>(scanner).getUserInput("Invalid Name, Please re-enter it", String.class, "Enter product name: "));
+        product.setProductPrice(new InputExceptionHandler<Double>(scanner).getUserInput("Invalid Price, Please re-enter it", Double.class, "Enter product Price: "));
+        product.setProductQuantity(new InputExceptionHandler<Integer>(scanner).getUserInput("Invalid quantity, Please re-enter it", Integer.class, "Enter product available quantity: "));
         products.put(product.getProductId(), product);
         saveToFile();
         return new Response<>(null, "Product added", true, null);
@@ -58,8 +56,13 @@ public class Inventory implements InventoryService {
             double totalValue = 0;
             Map<String, List<Report>> doubleListMap = new HashMap<>();
             List<Report> reports = new Vector<>();
+            System.out.println("Id\t\t\tProduct Name\tPrice\t\tQuantity");
             for (Product product : products.values()) {
                 totalValue += product.getProductPrice() * product.getProductQuantity();
+                System.out.printf(
+                        "%s\t\t%s\t\t%.4f\t\t%d%n",
+                        product.getProductId(), product.getProductName(),
+                        product.getProductPrice(), product.getProductQuantity());
                 reports.add(new Report(product.getProductName(), product.getProductPrice(), product.getProductQuantity()));
             }
             doubleListMap.put("Total value of inventory: "+totalValue, reports);
