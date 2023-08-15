@@ -42,7 +42,7 @@ public class Purchase implements Runnable {
         System.out.println((productVector.size() + 1) + ". Exit");
     }
 
-    private void logPurchase(Product product, Integer quantity) throws IOException {
+    private synchronized void logPurchase(Product product, Integer quantity) throws IOException {
         try {
             writePurchasesLog(product, quantity);
         } catch (Exception exception) {
