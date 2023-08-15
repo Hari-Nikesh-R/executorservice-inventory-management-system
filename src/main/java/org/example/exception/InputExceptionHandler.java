@@ -54,21 +54,4 @@ public final class InputExceptionHandler<T> {
         }
         return tClass.cast(null);
     }
-
-//    public String getUserInput(Class<T> tClass) {
-//        return scanner.nextLine();
-//    }
-//
-//    public Integer getUserInput() {
-//        return scanner.nextInt();
-//
-//    }
-//    public T getUserInput(Double input) {
-//
-//    }
-//    public T getUserInput(Long input) {
-//
-//    }
-
-
 }
