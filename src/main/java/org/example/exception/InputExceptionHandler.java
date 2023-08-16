@@ -20,7 +20,7 @@ public final class InputExceptionHandler<T> {
         }
     }
 
-    private T getInput(String failureMessage, Class<T> tClass, String inputMessageDescription) {
+    private T getInput(String failureMessage, Class<T> tClass, String inputMessageDescription)  {
         if (tClass == String.class) {
             System.out.println(inputMessageDescription);
             return tClass.cast(scanner.nextLine());
@@ -29,9 +29,15 @@ public final class InputExceptionHandler<T> {
                 System.out.println(inputMessageDescription);
                 integerValue = scanner.nextLine();
                 if (integerValue.matches("\\d+")) {
-                    Integer tempInteger = Integer.parseInt(integerValue);
-                    integerValue = null;
-                    return tClass.cast(tempInteger);
+                    if (integerValue.equals("0")){
+                        integerValue = null;
+                        System.out.println(failureMessage);
+                    }
+                    else {
+                        Integer tempInteger = Integer.parseInt(integerValue);
+                        integerValue = null;
+                        return tClass.cast(tempInteger);
+                    }
                 } else {
                     integerValue = null;
                     System.out.println(failureMessage);

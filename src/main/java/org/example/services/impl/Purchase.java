@@ -35,21 +35,35 @@ public class Purchase implements Runnable {
             System.out.println("Insufficient stock unable to purchase");
         }
         Vector<Product> productVector = inventoryService.getAllProducts();
-        System.out.println("Select an product for purchase");
-        for (int index = 1; index <= productVector.size(); index++) {
-            System.out.println(index + ". " + productVector.elementAt(index - 1));
+        if (productVector.size() > 0) {
+            System.out.println("Select an product for purchase");
+            for (int index = 1; index <= productVector.size(); index++) {
+                System.out.println(index + ". " + productVector.elementAt(index - 1));
+            }
+        }
+        else {
+            System.out.println("No Product Found to Purchase -  Quitting...");
         }
         System.out.println((productVector.size() + 1) + ". Exit");
     }
 
     private synchronized void logPurchase(Product product, Integer quantity) throws IOException {
         try {
-            writePurchasesLog(product, quantity);
-        } catch (Exception exception) {
-            boolean file = new File("purchases.log").createNewFile();
-            if (file) {
+            File file = new File("purchases.log");
+            if(file.exists()) {
                 writePurchasesLog(product, quantity);
             }
+            else {
+               if(file.createNewFile()) {
+                    writePurchasesLog(product, quantity);
+                }
+               else {
+                   System.out.println("Unable to write Logs");
+               }
+            }
+
+        } catch (Exception exception) {
+            System.out.println("Unable to write Logs");
             exception.printStackTrace();
         }
     }

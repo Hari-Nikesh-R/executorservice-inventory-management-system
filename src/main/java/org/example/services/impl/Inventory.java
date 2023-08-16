@@ -8,22 +8,20 @@ import org.example.exception.InputExceptionHandler;
 import org.example.model.Product;
 import org.example.services.InventoryService;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 public class Inventory implements InventoryService {
 
     private final Map<String, Product> products = new ConcurrentHashMap<>();
-    private  final Lock fileLock = new ReentrantLock();
     private final ObjectMapper mapper = new ObjectMapper();
+
     @Override
-    public Response<String> addProduct(Scanner scanner, Product product) {
+    public Response<String> addProduct(Scanner scanner, Product product) throws IOException {
         product.setProductId(generateProductId());
         product.setProductName(new InputExceptionHandler<String>(scanner).getUserInput("Invalid Name, Please re-enter it", String.class, "Enter product name: "));
         product.setProductPrice(new InputExceptionHandler<Double>(scanner).getUserInput("Invalid Price, Please re-enter it", Double.class, "Enter product Price: "));
@@ -33,18 +31,18 @@ public class Inventory implements InventoryService {
         return new Response<>(null, "Product added", true, null);
     }
 
+
     @Override
-    public Response<String> updateQuantity(String productId, Integer quantity) {
+    public synchronized Response<String> updateQuantity(String productId, Integer quantity) {
         try {
             Product product = products.get(productId);
             if (Objects.nonNull(product)) {
-                product.setProductQuantity(product.getProductQuantity()-quantity);
+                product.setProductQuantity(product.getProductQuantity() - quantity);
                 saveToFile();
             }
             return new Response<>(null, "Quantity updated", true, null);
-        }
-        catch (Exception exception) {
-            return new Response<>(null, "Quantity not updated",false, exception.getLocalizedMessage());
+        } catch (Exception exception) {
+            return new Response<>(null, "Quantity not updated", false, exception.getLocalizedMessage());
         }
     }
 
@@ -68,11 +66,10 @@ public class Inventory implements InventoryService {
                         product.getProductPrice(), product.getProductQuantity());
                 reports.add(new Report(product.getProductName(), product.getProductPrice(), product.getProductQuantity()));
             }
-            doubleListMap.put("Total value of inventory: "+totalValue, reports);
+            doubleListMap.put("Total value of inventory: " + totalValue, reports);
             return new Response<>(doubleListMap, "Report generated", true, null);
-        }
-        catch (Exception exception) {
-            return new Response<>(null, "Quantity not updated",false, exception.getLocalizedMessage());
+        } catch (Exception exception) {
+            return new Response<>(null, "Quantity not updated", false, exception.getLocalizedMessage());
         }
     }
 
@@ -82,45 +79,60 @@ public class Inventory implements InventoryService {
     }
 
     @Override
-    public void saveToFile()
-    {
-        try {
-            fileLock.lock();
+    public synchronized void saveToFile() {
+        try (FileWriter fileWriter = new FileWriter("products.txt", true)) {
+
             clearFile();
-            FileWriter fileWriter = new FileWriter("products.txt", true);
-            for(Product product: products.values()) {
+            for (Product product : products.values()) {
                 fileWriter.append(mapper.writeValueAsString(product));
                 fileWriter.append("\n");
             }
-            fileWriter.close();
-        }
-        catch (Exception ignore) {}
-        finally {
-            fileLock.unlock();
+
+        } catch (Exception ignore) {
         }
     }
 
     @Override
     public void loadFiles() throws IOException {
         try {
-           readProductFile();
-        }
-        catch (Exception exception) {
+            File file = new File("products.txt");
+            if (file.exists()) {
+                readProductFile();
+            } else {
+                if (file.createNewFile()) {
+                    readProductFile();
+                } else {
+                    System.out.println("Unable to read Logs");
+                }
+            }
+
+        } catch (Exception exception) {
             boolean file = new File("products.txt").createNewFile();
             if (file) {
                 readProductFile();
             }
         }
     }
+
     private void readProductFile() throws FileNotFoundException, JsonProcessingException {
-        Scanner scanner = new Scanner(new File("products.txt"));
-        while (scanner.hasNext()) {
-            Product product = mapper.readValue(scanner.nextLine(), Product.class);
-            products.put(product.getProductId(), product);
-            Product.idCounter++;
-            System.out.println("File loaded: " + product);
+        File file = new File("products.txt");
+        try (FileReader fr = new FileReader(file)) {
+            int content;
+            StringBuilder text = new StringBuilder();
+            while ((content = fr.read()) != -1) {
+                if ((char) content == '\n') {
+                    Product product = mapper.readValue(text.toString(), Product.class);
+                    Product.idCounter++;
+                    products.put(product.getProductId(), product);
+                    System.out.println("File loaded: " + product);
+                    text.setLength(0);
+                } else {
+                    text.append((char) content);
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-        scanner.close();
     }
 
     private void clearFile() throws IOException {
