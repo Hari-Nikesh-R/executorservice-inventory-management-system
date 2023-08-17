@@ -1,1 +1,1 @@
-# executorservice-inventory-management-system
+# Executorservice-inventory-management-system
